@@ -1,13 +1,13 @@
+import sys
+import os
+
 import requests
 import aiohttp
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-import sys
-print(sys.path)
-# from weather import settings
-# from weather.utils.logging import get_logger
-# from weather.utils.exceptions import CityDoesNotExist
+
+sys.path.append(os.getcwd())
 
 import settings
 from utils.logging import get_logger

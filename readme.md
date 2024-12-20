@@ -6,7 +6,7 @@ pipenv shell
 
 pipenv install
 
-fast dev main.py
+fastapi dev main.py
 
 curl 127.0.0.1:8000/weather?city=Kronstadt
 
@@ -22,9 +22,3 @@ sudo docker-compose up
 
 
 
-[//]: # (## Maintanance)
-
-[//]: # (From time to time, sync the requirements file with pipfile:)
-
-[//]: # ()
-[//]: # (pipenv lock -r > requirements.txt)
