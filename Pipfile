@@ -10,6 +10,7 @@ aiohttp = "*"
 fastapi-cache2 = "0.2.2"
 coloredlogs = "*"
 boto3 = "*"
+aioboto3 = "*"
 
 [dev-packages]
 

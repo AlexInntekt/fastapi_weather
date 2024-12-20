@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone, timedelta
 
 import boto3
+import aioboto3
 from botocore.exceptions import NoCredentialsError
 
 import settings
@@ -18,48 +19,60 @@ class CacheManager():
 
     def __init__(self, bucket_name=settings.S3_BUCKET_NAME):
         self.bucket_name = bucket_name
-        self.s3_resource = boto3.resource('s3')
-        self.s3_client = boto3.client('s3')
 
-
-    def cache_to_s3(self, city, data):
+    async def cache_to_s3(self, city, data):
         bucket = settings.S3_BUCKET_NAME
         timestamp = str(time.time()).split('.')[0]
-        file_key = city + f'/{timestamp}'
+        file_key = city + f'/{city}_{timestamp}.json'
         data = json.dumps(data).encode('utf-8')
 
         if settings.DELETE_ALL_CACHED_FILES:
-            self.delete_city_cached_files(city)
+            await self.delete_city_cached_files(city)
 
-        self.s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
+        async with aioboto3.client('s3') as s3_client:
+            await s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
         logger.info(f"File '{file_key}' uploaded to S3 bucket '{bucket}' successfully.")
 
-    def delete_city_cached_files(self, city):
+
+    async def delete_city_cached_files(self, city):
         prefix = f"{city}/"
-        response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
 
-        if 'Contents' in response:
-            objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+        async with aioboto3.client('s3') as s3_client:
+            response = await s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
 
-            self.s3_client.delete_objects(Bucket=self.bucket_name, Delete={'Objects': objects_to_delete})
-            logger.info(f"Deleted files in directory '{prefix}' from bucket '{self.bucket_name}'.")
+            if 'Contents' in response:
+                objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+
+                await s3_client.delete_objects(Bucket=self.bucket_name, Delete={'Objects': objects_to_delete})
+                logger.info(f"Deleted files in directory '{prefix}' from bucket '{self.bucket_name}'.")
 
 
-    def get_cached_objects_for_city(self, city: str):
-        s3_directory = self.s3_resource.Bucket(self.bucket_name)
-        files = s3_directory.objects.filter(Prefix=city)
-
-        result = [file for file in files]
+    async def get_cached_objects_for_city(self, city: str):
+        async with aioboto3.client('s3') as s3_client:
+            s3_directory = await s3_client.list_objects(Bucket=self.bucket_name, Prefix=city)
+            result = s3_directory.get('Contents')
 
         return result
 
 
-    def get_cache(self, city):
+
+    async def download_file(self, object_key):
+        async with aioboto3.client('s3') as s3_client:
+            response = await s3_client.get_object(Bucket=self.bucket_name, Key=object_key)
+
+            # Read the body of the response
+            async with response['Body'] as stream:
+                content = await stream.read()
+                return content.decode('utf-8')  # Decode bytes to string (if the file is text-based)
+
+
+    async def get_cache(self, city):
         current_time = datetime.now(timezone.utc)
         last_n_minutes = current_time - timedelta(minutes=settings.CACHE_TTL)
 
-        files = self.get_cached_objects_for_city(city)
-        files = [file for file in files if file.last_modified >= last_n_minutes]
+        files = await self.get_cached_objects_for_city(city)
+        if files:
+            files = [file for file in files if file['LastModified'] >= last_n_minutes]
 
         file_content = None
         file_timestamp = None
@@ -67,10 +80,11 @@ class CacheManager():
 
         if files:
             file = files[0]
-            file_timestamp = file.key
+            print(file)
+            file_timestamp = file['Key']
 
         if file:
-            file_content = file.get()['Body'].read().decode('utf-8')
+            file_content = await self.download_file(file['Key'])
             file_content = json.loads(file_content)
 
 
