@@ -4,7 +4,7 @@ import importlib
 from .logging import get_logger
 
 env = os.environ.get('ENV', 'local')  # Default to 'local' if ENV is not set
-module_name = f"settings.{env}"
+module_name = f"weather.settings.{env}"
 logger = get_logger(__name__)
 
 

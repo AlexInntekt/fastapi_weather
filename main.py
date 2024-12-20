@@ -3,7 +3,7 @@ import aiohttp
 
 from fastapi import FastAPI
 
-import settings
+from weather import settings
 
 
 app = FastAPI()
