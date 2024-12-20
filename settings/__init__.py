@@ -1,7 +1,7 @@
 import os
 import importlib
 
-from .logging import get_logger
+from weather.utils.logging import get_logger
 
 env = os.environ.get('ENV', 'local')  # Default to 'local' if ENV is not set
 module_name = f"weather.settings.{env}"
