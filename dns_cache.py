@@ -1,4 +1,5 @@
 import time
+import json
 from datetime import datetime, timezone, timedelta
 
 import boto3
@@ -26,9 +27,12 @@ class CacheManager():
         bucket = settings.S3_BUCKET_NAME
         timestamp = str(time.time()).split('.')[0]
         file_key = city + f'/{timestamp}'
+        # data = io.BytesIO(b"")
+        data = json.dumps(data).encode('utf-8')
 
         s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
         logger.info(f"File '{file_key}' uploaded to S3 bucket '{bucket}' successfully.")
+
 
     def get_cached_objects_for_city(self, city: str):
         s3_directory = s3_resource.Bucket(self.bucket_name)
@@ -38,12 +42,13 @@ class CacheManager():
 
         return result
 
+
     def get_cache(self, city):
         current_time = datetime.now(timezone.utc)
-        last_5_minutes = current_time - timedelta(minutes=5)
+        last_n_minutes = current_time - timedelta(minutes=settings.CACHE_TTL)
 
         files = self.get_cached_objects_for_city(city)
-        files = [file for file in files if file.last_modified >= last_5_minutes]
+        files = [file for file in files if file.last_modified >= last_n_minutes]
 
         if files:
             file = files[0].key
