@@ -8,6 +8,7 @@ fastapi = {extras = ["standard"], version = "*"}
 requests = "*"
 aiohttp = "*"
 fastapi-cache2 = "*"
+coloredlogs = "*"
 
 [dev-packages]
 

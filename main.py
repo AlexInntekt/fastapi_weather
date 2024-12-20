@@ -3,7 +3,7 @@ import aiohttp
 
 from fastapi import FastAPI
 
-import config
+import settings
 
 
 app = FastAPI()
@@ -13,7 +13,6 @@ app = FastAPI()
 
 async def get_openweathermap_data(url, city):
     url = url + f'?appid={config.OPENWEATHERMAP_API_KEY}' + f'&q={city}'
-    print(url)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -34,3 +33,6 @@ async def weather(city):
         'weather': result
     }
     return response
+
+if __name__=='__main__':
+    print(f'Running main with settings: {settings.module_name}')

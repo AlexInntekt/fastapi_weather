@@ -1,3 +1,5 @@
+from .base import *
+
 import os
 
 OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_KEY', 'ad0ad2ac179bf0b21d34052cc212bf1e')
