@@ -10,8 +10,7 @@ from utils.logging import get_logger
 
 
 # Initialize S3 client
-s3_resource = boto3.resource('s3')
-s3_client =  boto3.client('s3')
+
 logger = get_logger(__name__)
 
 
@@ -19,8 +18,8 @@ class CacheManager():
 
     def __init__(self, bucket_name=settings.S3_BUCKET_NAME):
         self.bucket_name = bucket_name
-
-    # def add_object(self):
+        self.s3_resource = boto3.resource('s3')
+        self.s3_client = boto3.client('s3')
 
 
     def cache_to_s3(self, city, data):
@@ -29,12 +28,25 @@ class CacheManager():
         file_key = city + f'/{timestamp}'
         data = json.dumps(data).encode('utf-8')
 
-        s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
+        if settings.DELETE_ALL_CACHED_FILES:
+            self.delete_city_cached_files(city)
+
+        self.s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
         logger.info(f"File '{file_key}' uploaded to S3 bucket '{bucket}' successfully.")
+
+    def delete_city_cached_files(self, city):
+        prefix = f"{city}/"
+        response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
+
+        if 'Contents' in response:
+            objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+
+            self.s3_client.delete_objects(Bucket=self.bucket_name, Delete={'Objects': objects_to_delete})
+            logger.info(f"Deleted files in directory '{prefix}' from bucket '{self.bucket_name}'.")
 
 
     def get_cached_objects_for_city(self, city: str):
-        s3_directory = s3_resource.Bucket(self.bucket_name)
+        s3_directory = self.s3_resource.Bucket(self.bucket_name)
         files = s3_directory.objects.filter(Prefix=city)
 
         result = [file for file in files]
@@ -49,16 +61,17 @@ class CacheManager():
         files = self.get_cached_objects_for_city(city)
         files = [file for file in files if file.last_modified >= last_n_minutes]
 
+        file_content = None
+        file_timestamp = None
+        file = None
+
         if files:
             file = files[0]
-        else:
-            file = None
+            file_timestamp = file.key
 
         if file:
-            print(dir(file))
-            json_string = file.get()['Body'].read().decode('utf-8')
-            file = json.loads(json_string)
+            file_content = file.get()['Body'].read().decode('utf-8')
+            file_content = json.loads(file_content)
 
 
-
-        return file
+        return file_content, file_timestamp
