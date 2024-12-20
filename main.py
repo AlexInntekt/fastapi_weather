@@ -18,25 +18,32 @@ logger = get_logger(__name__)
 
 
 
-async def get_openweathermap_data(url: str, city: str):
-    url = url + f'?appid={settings.OPENWEATHERMAP_API_KEY}' + f'&q={city}'
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            status_code = response.status
-
-            if status_code == 404:
-                # TODO find a way to figure out for sure if the 404 is caused by a wrong city name.
-                #  404 can be caused by a change in the root URL made by the weather data provider
-                logger.debug(f'A request was made for a city that does not exist {city}')
-                raise CityDoesNotExist(city)
-
-            data = (await response.json())
-            return data
+class WeatherDataManager():
+    def __init__(self, city: str):
+        self.city = city
 
 
-async def get_weather_data(city: str):
-    return await get_openweathermap_data(settings.OPENWEATHERMAP_BASE_URL, city)
+    async def get_openweathermap_data(self, url: str):
+        city = self.city
+
+        url = url + f'?appid={settings.OPENWEATHERMAP_API_KEY}' + f'&q={city}'
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                status_code = response.status
+
+                if status_code == 404:
+                    # TODO find a way to figure out for sure if the 404 is caused by a wrong city name.
+                    #  404 can be caused by a change in the root URL made by the weather data provider
+                    logger.debug(f'A request was made for a city that does not exist {city}')
+                    raise CityDoesNotExist(city)
+
+                data = (await response.json())
+                return data
+
+
+    async def get_weather_data(self):
+        return await self.get_openweathermap_data(settings.OPENWEATHERMAP_BASE_URL)
 
 
 @app.get("/weather")
@@ -48,7 +55,7 @@ async def get_weather(city: str) -> JSONResponse:
     """
 
     try:
-        result = await get_weather_data(city)
+        result = await WeatherDataManager(city).get_weather_data()
 
         response = {
             'city': city,
