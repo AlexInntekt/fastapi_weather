@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = {extras = ["standard"], version = "*"}
+fastapi = {extras = ["standard"], version = "0.115.6"}
 requests = "*"
 aiohttp = "*"
-fastapi-cache2 = "*"
+fastapi-cache2 = "0.2.2"
 coloredlogs = "*"
 
 [dev-packages]

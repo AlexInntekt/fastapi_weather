@@ -3,17 +3,22 @@ import aiohttp
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+import sys
+print(sys.path)
+# from weather import settings
+# from weather.utils.logging import get_logger
+# from weather.utils.exceptions import CityDoesNotExist
 
-from weather import settings
-from weather.utils.logging import get_logger
-from weather.utils.exceptions import CityDoesNotExist
+import settings
+from utils.logging import get_logger
+from utils.exceptions import CityDoesNotExist
 
 app = FastAPI()
 logger = get_logger(__name__)
 
 
 
-async def get_openweathermap_data(url, city):
+async def get_openweathermap_data(url: str, city: str):
     url = url + f'?appid={settings.OPENWEATHERMAP_API_KEY}' + f'&q={city}'
 
     async with aiohttp.ClientSession() as session:
@@ -29,12 +34,13 @@ async def get_openweathermap_data(url, city):
             data = (await response.json())
             return data
 
-async def get_weather_data(city):
+
+async def get_weather_data(city: str):
     return await get_openweathermap_data(settings.OPENWEATHERMAP_BASE_URL, city)
 
 
 @app.get("/weather")
-async def weather(city):
+async def get_weather(city: str) -> JSONResponse:
     """
     Returns weather data for a specific city name.
     :param city: str
