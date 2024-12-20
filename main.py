@@ -84,7 +84,8 @@ async def get_cache(city: str ='Oradea') -> JSONResponse:
     Return state of current cache
     :return:
     """
-    response = [file.key for file in CacheManager().get_cached_objects_for_city(city=city)]
+    # response = [file.key for file in CacheManager().get_cache(city=city)]
+    response = CacheManager().get_cache(city=city)
 
     return JSONResponse(content=response, status_code=200)
 

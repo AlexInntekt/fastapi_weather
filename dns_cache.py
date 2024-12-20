@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone, timedelta
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -8,7 +9,8 @@ from utils.logging import get_logger
 
 
 # Initialize S3 client
-s3 = boto3.resource('s3')
+s3_resource = boto3.resource('s3')
+s3_client =  boto3.client('s3')
 logger = get_logger(__name__)
 
 
@@ -25,11 +27,11 @@ class CacheManager():
         timestamp = str(time.time()).split('.')[0]
         file_key = city + f'/{timestamp}'
 
-        s3.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
+        s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
         logger.info(f"File '{file_key}' uploaded to S3 bucket '{bucket}' successfully.")
 
     def get_cached_objects_for_city(self, city: str):
-        s3_directory = s3.Bucket(self.bucket_name)
+        s3_directory = s3_resource.Bucket(self.bucket_name)
         files = s3_directory.objects.filter(Prefix=city)
 
         result = [file for file in files]
@@ -43,5 +45,8 @@ class CacheManager():
         files = self.get_cached_objects_for_city(city)
         files = [file for file in files if file.last_modified >= last_5_minutes]
 
-        file = files[0]
-        print(file)
+        if files:
+            file = files[0].key
+        else:
+            file = None
+        return file
