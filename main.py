@@ -58,14 +58,21 @@ async def get_weather(city: str) -> JSONResponse:
     """
 
     try:
-        # cache = False# CacheManager().get_cache(city=city)
-        # if cache and settings.USE_S3_CACHE:
-        #     result = cache
-        # else:
-        result = await WeatherDataManager(city).get_weather_data()
-
         if settings.USE_S3_CACHE:
-            CacheManager().cache_to_s3(city, result)
+            found_cache = CacheManager().get_cache(city=city)
+            logger.info(f'CACHED DATA FOR CITY {city} WAS FOUND. ')
+
+            if found_cache is None:
+                logger.info(f'CACHING WEATHER DATA FOR CITY {city} INTO DNS')
+
+                result = await WeatherDataManager(city).get_weather_data()
+                CacheManager().cache_to_s3(city, result)
+            else:
+                result = found_cache
+
+        else:
+            result = await WeatherDataManager(city).get_weather_data()
+
 
         response = {
             'city': city,

@@ -27,7 +27,6 @@ class CacheManager():
         bucket = settings.S3_BUCKET_NAME
         timestamp = str(time.time()).split('.')[0]
         file_key = city + f'/{timestamp}'
-        # data = io.BytesIO(b"")
         data = json.dumps(data).encode('utf-8')
 
         s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
@@ -51,7 +50,15 @@ class CacheManager():
         files = [file for file in files if file.last_modified >= last_n_minutes]
 
         if files:
-            file = files[0].key
+            file = files[0]
         else:
             file = None
+
+        if file:
+            print(dir(file))
+            json_string = file.get()['Body'].read().decode('utf-8')
+            file = json.loads(json_string)
+
+
+
         return file

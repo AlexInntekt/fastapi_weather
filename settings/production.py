@@ -2,6 +2,7 @@ from .base import *
 
 import os
 
+USE_S3_CACHE = os.getenv('USE_S3_CACHE', True)
 OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_KEY')
 OPENWEATHERMAP_BASE_URL = os.getenv('OPENWEATHERMAP_BASE_URL')
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
