@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+import io
 
 import requests
 import aiohttp
@@ -12,6 +14,7 @@ sys.path.append(os.getcwd())
 import settings
 from utils.logging import get_logger
 from utils.exceptions import CityDoesNotExist
+from dns_cache import CacheManager
 
 app = FastAPI()
 logger = get_logger(__name__)
@@ -74,6 +77,22 @@ async def get_weather(city: str) -> JSONResponse:
 
     return JSONResponse(content=response, status_code=status_code)
 
+
+@app.get('/cache')
+async def get_cache() -> JSONResponse:
+    """
+    Return samples of current cache
+    :return:
+    """
+    pass
+
+
+@app.post('/cache')
+async def write_cache(city: str ='Oradea') -> JSONResponse:
+
+    file_data = io.BytesIO(b"This is the content of the file.")
+
+    CacheManager().cache_to_s3(city, file_data)
 
 
 if __name__=='__main__':
