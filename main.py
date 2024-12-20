@@ -79,12 +79,14 @@ async def get_weather(city: str) -> JSONResponse:
 
 
 @app.get('/cache')
-async def get_cache() -> JSONResponse:
+async def get_cache(city: str ='Oradea') -> JSONResponse:
     """
-    Return samples of current cache
+    Return state of current cache
     :return:
     """
-    pass
+    response = [file.key for file in CacheManager().get_cached_objects_for_city(city=city)]
+
+    return JSONResponse(content=response, status_code=200)
 
 
 @app.post('/cache')
