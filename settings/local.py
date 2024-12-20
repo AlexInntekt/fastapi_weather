@@ -8,3 +8,4 @@ OPENWEATHERMAP_BASE_URL = os.getenv('OPENWEATHERMAP_BASE_URL', 'https://api.open
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 's3-temporary-bucket-alex')
 CACHE_TTL = os.getenv('CACHE_TTL', 5)
 DELETE_ALL_CACHED_FILES = os.getenv('DELETE_ALL_CACHED_FILES', True)
+S3_REGION_NAME = os.getenv('S3_REGION_NAME', 'eu-central-1')
