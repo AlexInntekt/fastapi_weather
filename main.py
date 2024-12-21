@@ -66,7 +66,7 @@ async def get_weather(city: str) -> JSONResponse:
                 logger.info(f'CACHING WEATHER DATA FOR CITY {city} INTO S3')
 
                 result = await WeatherDataManager(city).get_weather_data()
-                await CacheManager().cache_to_s3(city, result)
+                file_path = await CacheManager().cache_to_s3(city, result)
             else:
                 logger.info(f'CACHED DATA FOR CITY {city} WAS FOUND. {found_cache}')
                 result = found_cache

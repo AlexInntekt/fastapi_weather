@@ -33,6 +33,8 @@ class CacheManager():
             await s3_client.put_object(Bucket=self.bucket_name, Body=data, Key=file_key)
         logger.info(f"File '{file_key}' uploaded to S3 bucket '{bucket}' successfully.")
 
+        return file_key
+    
 
     async def delete_city_cached_files(self, city):
         prefix = f"{city}/"
