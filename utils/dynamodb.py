@@ -7,6 +7,12 @@ import settings
 
 
 async def write_log_to_dynamodb(city: str, cdn_file_path: str):
+    """
+    This procedure writes a log to dynamodb.
+    :param city: str
+    :param cdn_file_path: str
+    :return: None
+    """
 
     # Initialize an aioboto3 DynamoDB session
     async with aioboto3.Session().resource("dynamodb", region_name=settings.DYNAMODB_REGION_NAME) as dynamodb:
