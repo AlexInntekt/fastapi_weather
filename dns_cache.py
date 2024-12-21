@@ -60,16 +60,16 @@ class CacheManager():
         async with aioboto3.client('s3', region_name=settings.S3_REGION_NAME) as s3_client:
             response = await s3_client.get_object(Bucket=self.bucket_name, Key=object_key)
 
-            # Read the body of the response
             async with response['Body'] as stream:
                 content = await stream.read()
-                return content.decode('utf-8')  # Decode bytes to string (if the file is text-based)
+                return content.decode('utf-8')
 
 
     async def get_cache(self, city):
         current_time = datetime.now(timezone.utc)
         last_n_minutes = current_time - timedelta(minutes=settings.CACHE_TTL)
 
+        # get all cached files for this city
         files = await self.get_cached_objects_for_city(city)
         if files:
             files = [file for file in files if file['LastModified'] >= last_n_minutes]
@@ -78,9 +78,9 @@ class CacheManager():
         file_timestamp = None
         file = None
 
+        # if there exists at least one file, start downloading its content
         if files:
             file = files[0]
-            print(file)
             file_timestamp = file['Key']
 
         if file:

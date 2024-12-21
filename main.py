@@ -98,7 +98,8 @@ async def get_weather(city: str) -> JSONResponse:
 @app.get('/cache')
 async def get_cache(city: str ='Oradea') -> JSONResponse:
     """
-    Return state of current cache
+    Return state of current cache.
+    :param city: str
     :return:
     """
     # response = [file.key for file in CacheManager().get_cache(city=city)]
@@ -109,6 +110,9 @@ async def get_cache(city: str ='Oradea') -> JSONResponse:
 
 @app.post('/cache')
 async def write_cache(city: str ='Oradea') -> JSONResponse:
+    """
+    Method to write a cache as test.
+    """
 
     file_data = io.BytesIO(b"This is the content of the file.")
 
