@@ -14,6 +14,7 @@ sys.path.append(os.getcwd())
 import settings
 from utils.logging import get_logger
 from utils.exceptions import CityDoesNotExist
+from utils.dynamodb import write_log_to_dynamodb
 from dns_cache import CacheManager
 
 app = FastAPI()
@@ -59,10 +60,10 @@ async def get_weather(city: str) -> JSONResponse:
 
     try:
         if settings.USE_S3_CACHE:
-            found_cache, cache_timestamp = await CacheManager().get_cache(city=city)
+            found_cache, file_path = await CacheManager().get_cache(city=city)
 
             if found_cache is None:
-                logger.info(f'CACHING WEATHER DATA FOR CITY {city} INTO DNS')
+                logger.info(f'CACHING WEATHER DATA FOR CITY {city} INTO S3')
 
                 result = await WeatherDataManager(city).get_weather_data()
                 await CacheManager().cache_to_s3(city, result)
@@ -72,14 +73,15 @@ async def get_weather(city: str) -> JSONResponse:
 
         else:
             result = await WeatherDataManager(city).get_weather_data()
-            cache_timestamp = None
+            file_path = None
 
+        await write_log_to_dynamodb(city, file_path)
 
         response = {
             'city': city,
             'weather': result,
             'found_cache': True if found_cache else False,
-            'cache_timestamp': cache_timestamp
+            'file_path': file_path
         }
         status_code = 200
 
@@ -102,7 +104,6 @@ async def get_cache(city: str ='Oradea') -> JSONResponse:
     :param city: str
     :return:
     """
-    # response = [file.key for file in CacheManager().get_cache(city=city)]
     response = CacheManager().get_cache(city=city)
 
     return JSONResponse(content=response, status_code=200)

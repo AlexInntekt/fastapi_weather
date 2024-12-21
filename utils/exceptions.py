@@ -1,7 +1,7 @@
 
 
 class CityDoesNotExist(Exception):
-    """Exception raised for city name input"""
+    """Exception raised for city name that does not exist."""
 
     def __init__(self, city_name, message="City name does not exist:"):
         self.city_name = city_name
