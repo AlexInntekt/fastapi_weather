@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 
 import settings
 from utils.logging import get_logger
-from utils.exceptions import CityDoesNotExist
+from utils.exceptions import CityDoesNotExist, WeatherDataSourceDoesNotExist
 from utils.dynamodb import write_log_to_dynamodb
 from cdn_cache import CacheManager
 from data_acquisition.weather import WeatherDataManager
@@ -26,12 +26,15 @@ async def get_weather(city: str, data_source: str="openweathermap") -> JSONRespo
     """
     Returns weather data for a specific city name.
     :param city: str
+    :param data_source: str
+        openweathermap is the Default
     :return:
     """
 
     try:
         # Initialize variables
         file_path, result, found_cache = None, None, None
+
 
         if settings.USE_S3_CACHE:
             cache_manager = CacheManager()
@@ -62,7 +65,7 @@ async def get_weather(city: str, data_source: str="openweathermap") -> JSONRespo
         }
         status_code = 200
 
-    except CityDoesNotExist as error:
+    except (CityDoesNotExist, WeatherDataSourceDoesNotExist) as error:
         response = {
             'error': error.message
         }
