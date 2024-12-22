@@ -11,7 +11,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.get("/weather")
+@router.get("/weather") # TODO integrate Pydantic
 async def get_weather(city: str, data_source: str="openweathermap") -> JSONResponse:
     """
     Returns weather data for a specific city name.
