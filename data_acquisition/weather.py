@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 from utils.logging import get_logger
 import settings
+from utils.exceptions import CityDoesNotExist
 
 logger = get_logger(__name__)
 
@@ -17,6 +18,20 @@ class WeatherDataManager(ABC):
     @abstractmethod
     async def get_weather_data(self):
         pass
+
+    @staticmethod
+    def factory(data_source: str, city: str):
+        """
+        Factory method to create an appropriate weather data manager.
+
+        :param data_source: The name of the weather data provider (e.g., 'openweathermap').
+        :param city: The city for which to fetch weather data.
+        :return: An instance of a concrete WeatherDataManager subclass.
+        """
+        if data_source.lower() == "openweathermap":
+            return OpenWeatherMapDataManager(city)
+        else:
+            raise ValueError(f"Unsupported data source: {data_source}")
 
 
 class OpenWeatherMapDataManager(WeatherDataManager):

@@ -15,14 +15,14 @@ from utils.logging import get_logger
 from utils.exceptions import CityDoesNotExist
 from utils.dynamodb import write_log_to_dynamodb
 from cdn_cache import CacheManager
-from data_acquisition.weather import OpenWeatherMapDataManager
+from data_acquisition.weather import WeatherDataManager
 
 app = FastAPI()
 logger = get_logger(__name__)
 
 
 @app.get("/weather")
-async def get_weather(city: str) -> JSONResponse:
+async def get_weather(city: str, data_source: str="openweathermap") -> JSONResponse:
     """
     Returns weather data for a specific city name.
     :param city: str
@@ -43,11 +43,14 @@ async def get_weather(city: str) -> JSONResponse:
                 result = found_cache
             else:
                 logger.info(f"Caching weather data for city: {city} into S3")
-                result = await OpenWeatherMapDataManager(city).get_weather_data()
+                weather_data_manager = WeatherDataManager.factory(data_source, city)
+                result = await weather_data_manager.get_weather_data()
+
                 file_path = await cache_manager.cache_to_s3(city, result)
 
         else:
-            result = await OpenWeatherMapDataManager(city).get_weather_data()
+            weather_data_manager = WeatherDataManager.factory(data_source, city)
+            result = await weather_data_manager.get_weather_data()
 
         await write_log_to_dynamodb(city, file_path)
 
