@@ -3,8 +3,7 @@ import os
 import time
 import io
 
-import requests
-import aiohttp
+
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -16,38 +15,10 @@ from utils.logging import get_logger
 from utils.exceptions import CityDoesNotExist
 from utils.dynamodb import write_log_to_dynamodb
 from cdn_cache import CacheManager
+from data_acquisition.weather import OpenWeatherMapDataManager
 
 app = FastAPI()
 logger = get_logger(__name__)
-
-
-
-class WeatherDataManager():
-    def __init__(self, city: str):
-        self.city = city
-
-
-    async def get_openweathermap_data(self, url: str):
-        city = self.city
-
-        url = url + f'?appid={settings.OPENWEATHERMAP_API_KEY}' + f'&q={city}'
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                status_code = response.status
-
-                if status_code == 404:
-                    # TODO find a way to figure out for sure if the 404 is caused by a wrong city name.
-                    #  404 can be caused by a change in the root URL made by the weather data provider
-                    logger.debug(f'A request was made for a city that does not exist {city}')
-                    raise CityDoesNotExist(city)
-
-                data = (await response.json())
-                return data
-
-
-    async def get_weather_data(self):
-        return await self.get_openweathermap_data(settings.OPENWEATHERMAP_BASE_URL)
 
 
 @app.get("/weather")
@@ -59,21 +30,24 @@ async def get_weather(city: str) -> JSONResponse:
     """
 
     try:
+        # Initialize variables
+        file_path, result, found_cache = None, None, None
+
         if settings.USE_S3_CACHE:
-            found_cache, file_path = await CacheManager().get_cache(city=city)
+            cache_manager = CacheManager()
 
-            if found_cache is None:
-                logger.info(f'CACHING WEATHER DATA FOR CITY {city} INTO S3')
+            found_cache, file_path = await cache_manager.get_cache(city=city)
 
-                result = await WeatherDataManager(city).get_weather_data()
-                file_path = await CacheManager().cache_to_s3(city, result)
-            else:
-                logger.info(f'CACHED DATA FOR CITY {city} WAS FOUND. {found_cache}')
+            if found_cache:
+                logger.info(f"Retrieved cached data for city: {city} from S3. Cache Path: {file_path}")
                 result = found_cache
+            else:
+                logger.info(f"Caching weather data for city: {city} into S3")
+                result = await OpenWeatherMapDataManager(city).get_weather_data()
+                file_path = await cache_manager.cache_to_s3(city, result)
 
         else:
-            result = await WeatherDataManager(city).get_weather_data()
-            file_path = None
+            result = await OpenWeatherMapDataManager(city).get_weather_data()
 
         await write_log_to_dynamodb(city, file_path)
 

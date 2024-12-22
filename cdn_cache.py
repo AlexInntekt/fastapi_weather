@@ -10,7 +10,6 @@ import settings
 from utils.logging import get_logger
 
 
-# Initialize S3 client
 
 logger = get_logger(__name__)
 
@@ -58,6 +57,7 @@ class CacheManager():
             # list all cached files under the 'city/' key
             response = await s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
 
+            # TODO maybe check if there is content other way
             if 'Contents' in response:
                 objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
 
@@ -65,7 +65,7 @@ class CacheManager():
                 logger.info(f"Deleted files in directory '{prefix}' from bucket '{self.bucket_name}'.")
 
 
-    async def get_cached_objects_for_city(self, city: str):
+    async def get_names_of_cached_files(self, city: str):
         """
         Returns a list of cache file names for a specific city.
         :param city: str
@@ -79,7 +79,7 @@ class CacheManager():
 
 
 
-    async def download_file(self, object_key):
+    async def download_cached_file(self, object_key):
         """
         Downloads the content of cached file
         :param object_key: str
@@ -105,7 +105,7 @@ class CacheManager():
         last_n_minutes = current_time - timedelta(minutes=settings.CACHE_TTL)
 
         # get all cached files for this city
-        files = await self.get_cached_objects_for_city(city)
+        files = await self.get_names_of_cached_files(city)
         if files:
             files = [file for file in files if file['LastModified'] >= last_n_minutes]
 
@@ -119,7 +119,7 @@ class CacheManager():
             file_path = file['Key']
 
         if file:
-            file_content = await self.download_file(file['Key'])
+            file_content = await self.download_cached_file(file['Key'])
             file_content = json.loads(file_content)
 
 
