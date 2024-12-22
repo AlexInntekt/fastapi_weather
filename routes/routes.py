@@ -2,9 +2,8 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from utils.exceptions import CityDoesNotExist, WeatherDataSourceDoesNotExist
-from adapters.dynamodb import write_log_to_dynamodb
-from adapters.cdn_cache import CacheManager
-from adapters.weather_api import WeatherDataManager
+
+from services.weather_service import WeatherService
 from utils.logging import get_logger
 import settings
 
@@ -23,36 +22,14 @@ async def get_weather(city: str, data_source: str="openweathermap") -> JSONRespo
     """
 
     try:
-        # Initialize variables
-        file_path, result, found_cache = None, None, None
-
-
-        if settings.USE_S3_CACHE:
-            cache_manager = CacheManager()
-
-            found_cache, file_path = await cache_manager.get_cache(city=city)
-
-            if found_cache:
-                logger.info(f"Retrieved cached data for city: {city} from S3. Cache Path: {file_path}")
-                result = found_cache
-            else:
-                logger.info(f"Caching weather data for city: {city} into S3")
-                weather_data_manager = WeatherDataManager.factory(data_source, city)
-                result = await weather_data_manager.get_weather_data()
-
-                file_path = await cache_manager.cache_to_s3(city, result)
-
-        else:
-            weather_data_manager = WeatherDataManager.factory(data_source, city)
-            result = await weather_data_manager.get_weather_data()
-
-        await write_log_to_dynamodb(city, file_path)
+        weather_service = WeatherService(data_source)
+        weather_data, found_cache, cache_file_path = await weather_service.get_weather(city)
 
         response = {
             'city': city,
-            'weather': result,
+            'weather': weather_data,
             'found_cache': True if found_cache else False,
-            'file_path': file_path
+            'file_path': cache_file_path
         }
         status_code = 200
 

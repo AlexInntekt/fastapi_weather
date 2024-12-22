@@ -10,7 +10,9 @@ async def write_log_to_dynamodb(city: str, cdn_file_path: str):
     """
     This procedure writes a log to dynamodb.
     :param city: str
+        Name of the city
     :param cdn_file_path: str
+        File path in CDN
     :return: None
     """
 
