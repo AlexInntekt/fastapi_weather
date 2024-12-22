@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class WeatherService():
+    """
+    General weather service class
+    """
 
     def __init__(self, data_source: str):
         self.data_source = data_source
