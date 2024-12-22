@@ -2,7 +2,9 @@
 
 echo 'export ENV=local' > .env
 
- Make sure you set all the neccesary variables in .env file. You can find them in the settings/local.py
+Make sure you set the neccesary variables in .env file. You can find them in the settings/local.py
+The default settings module that is used is settings.local and it already has default values for all the variables. 
+The connection to AWS S3 and Dynamodb is made via the AWS CLI profile. Configure one using 'aws configure'
 
 pipenv shell
 
