@@ -11,7 +11,7 @@ from utils.exceptions import CityDoesNotExist, WeatherDataSourceDoesNotExist
 logger = get_logger(__name__)
 
 
-class WeatherDataManager(ABC):
+class WeatherSourceManager(ABC):
     def __init__(self):
         pass
 
@@ -30,13 +30,13 @@ class WeatherDataManager(ABC):
         """
 
         if data_source.lower() == "openweathermap":
-            return OpenWeatherMapDataManager(city)
+            return OpenWeatherMapManager(city)
         else:
             logger.error(f'DATA SOURCE {data_source} DOES NOT EXIST')
             raise WeatherDataSourceDoesNotExist(data_source)
 
 
-class OpenWeatherMapDataManager(WeatherDataManager):
+class OpenWeatherMapManager(WeatherSourceManager):
     def __init__(self, city: str):
         self.city = city
         super().__init__()

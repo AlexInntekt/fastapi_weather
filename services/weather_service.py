@@ -1,6 +1,6 @@
 from adapters.dynamodb import write_log_to_dynamodb
 from adapters.cdn_cache import CacheManager
-from adapters.weather_api import WeatherDataManager
+from adapters.weather_api import WeatherSourceManager
 import settings
 import logging
 
@@ -14,7 +14,7 @@ class WeatherService():
 
 
     async def get_weather(self, city):
-        file_path, result, found_cache = None, None, None
+        file_path, weather_data, found_cache = None, None, None
 
         if settings.USE_S3_CACHE:
             cache_manager = CacheManager()
@@ -23,18 +23,18 @@ class WeatherService():
 
             if found_cache:
                 logger.info(f"Retrieved cached data for city: {city} from S3. Cache Path: {file_path}")
-                result = found_cache
+                weather_data = found_cache
             else:
                 logger.info(f"Caching weather data for city: {city} into S3")
-                weather_data_manager = WeatherDataManager.factory(self.data_source, city)
-                result = await weather_data_manager.get_weather_data()
+                weather_data_manager = WeatherSourceManager.factory(self.data_source, city)
+                weather_data = await weather_data_manager.get_weather_data()
 
-                file_path = await cache_manager.cache_to_s3(city, result)
+                file_path = await cache_manager.cache_to_s3(city, weather_data)
 
         else:
-            weather_data_manager = WeatherDataManager.factory(self.data_source, city)
-            result = await weather_data_manager.get_weather_data()
+            weather_data_manager = WeatherSourceManager.factory(self.data_source, city)
+            weather_data = await weather_data_manager.get_weather_data()
 
         await write_log_to_dynamodb(city, file_path)
 
-        return result, found_cache, file_path
+        return weather_data, found_cache, file_path
