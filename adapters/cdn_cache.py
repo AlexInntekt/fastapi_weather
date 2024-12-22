@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 
 class CacheManager():
     """
-    Cache manager class that deals with operations on the S3 bucket for cache retrieval, creation and deletion.
+    Cache manager class that  works as a facade and deals with operations on the S3 bucket for cache retrieval, creation and deletion.
     """
 
     def __init__(self, bucket_name=settings.S3_BUCKET_NAME):

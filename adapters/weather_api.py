@@ -12,6 +12,9 @@ logger = get_logger(__name__)
 
 
 class WeatherSourceManager(ABC):
+    """
+    This class works a facade that deals with the data requests to the weather data provider.
+    """
     def __init__(self):
         pass
 
@@ -37,6 +40,9 @@ class WeatherSourceManager(ABC):
 
 
 class OpenWeatherMapManager(WeatherSourceManager):
+    """
+    This class is a manager that deals with the REST requests to the weather data source (openweathermap.com)
+    """
     def __init__(self, city: str):
         self.city = city
         super().__init__()
